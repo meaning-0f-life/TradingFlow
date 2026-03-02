@@ -17,6 +17,14 @@ A powerful, visual workflow orchestration platform for financial market analysis
 - **Secure API Key Management**: Encrypted storage of all external service credentials
 - **Extensible Architecture**: Easy to add custom nodes and integrations
 
+## Interface
+
+<p align="center">
+  <img src="assets/screenshot.png" alt="TradingFlow Visual Workflow Editor" width="800"/>
+</p>
+
+The visual editor allows you to create workflows by connecting nodes on a canvas. Drag nodes from the toolbar, configure their parameters, and connect them to define data flow.
+
 ## Architecture
 
 ```
