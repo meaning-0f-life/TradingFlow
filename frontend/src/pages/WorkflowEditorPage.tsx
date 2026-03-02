@@ -114,12 +114,9 @@ export default function WorkflowEditorPage() {
     setSelectedNode(node);
   }, []);
 
-  const onPaneClick = useCallback((event: React.MouseEvent) => {
-    // Only deselect node if clicking directly on the pane (not on a node or edge)
-    // This prevents unwanted navigation or state changes
-    if (event.target === event.currentTarget) {
-      setSelectedNode(null);
-    }
+  const onPaneClick = useCallback(() => {
+    // Simply deselect any selected node when clicking on the pane
+    setSelectedNode(null);
   }, []);
 
   const addNode = useCallback((nodeType: string) => {
@@ -269,7 +266,7 @@ export default function WorkflowEditorPage() {
 
       <div className="flex-1 flex overflow-hidden">
         {/* React Flow Canvas */}
-        <div className="flex-1">
+        <div className="flex-1 h-full">
           <ReactFlow
             nodes={nodes}
             edges={edges}
