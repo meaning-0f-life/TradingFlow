@@ -1,5 +1,5 @@
 from datetime import timedelta
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Body
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
 from app.core.database import get_db
@@ -60,7 +60,11 @@ def register(user_data: UserCreate, db: Session = Depends(get_db)):
     return new_user
 
 @router.post("/login", response_model=Token)
-def login(username: str, password: str, db: Session = Depends(get_db)):
+def login(
+    username: str = Body(..., embed=True),
+    password: str = Body(..., embed=True),
+    db: Session = Depends(get_db)
+):
     """Login and get access token"""
     user = db.query(User).filter(User.username == username).first()
     if not user or not verify_password(password, user.hashed_password):

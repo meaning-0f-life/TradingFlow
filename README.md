@@ -25,7 +25,7 @@ TradingFlow/
 │   ├── app/
 │   │   ├── core/      # Engine, security, config
 │   │   ├── nodes/     # Node implementations
-│   │   ├── agents/    # Multi-agent systems (LangGraph)
+│   │   ├── agents/    # Multi-agent systems (LangGraph - coming soon)
 │   │   ├── services/  # External services (DB, Vector DB)
 │   │   ├── models/    # Database models & Pydantic schemas
 │   │   └── api/       # REST API endpoints
