@@ -45,6 +45,7 @@ export default function WorkflowEditorPage() {
   const [selectedNode, setSelectedNode] = useState<Node | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [isRunning, setIsRunning] = useState(false);
+  const [newWorkflowName, setNewWorkflowName] = useState('');
 
   // Load node types on mount
   useEffect(() => {
@@ -58,14 +59,36 @@ export default function WorkflowEditorPage() {
       // Try to get from store first
       if (currentWorkflow?.id === workflowId) {
         const config = currentWorkflow.config as WorkflowConfig;
-        setNodes(config.nodes || []);
+        const backendNodes = config.nodes || [];
+        const rfNodes: Node[] = backendNodes.map((node: any) => ({
+          id: node.id,
+          type: 'custom',
+          position: node.position,
+          data: {
+            label: node.data?.label || node.type,
+            nodeType: node.type,
+            config: node.data?.config || {},
+          },
+        }));
+        setNodes(rfNodes);
         setEdges(config.edges || []);
       } else {
         // Fetch from API
         workflowsAPI.getById(workflowId).then((workflow) => {
           setCurrentWorkflow(workflow);
           const config = workflow.config as WorkflowConfig;
-          setNodes(config.nodes || []);
+          const backendNodes = config.nodes || [];
+          const rfNodes: Node[] = backendNodes.map((node: any) => ({
+            id: node.id,
+            type: 'custom',
+            position: node.position,
+            data: {
+              label: node.data?.label || node.type,
+              nodeType: node.type,
+              config: node.data?.config || {},
+            },
+          }));
+          setNodes(rfNodes);
           setEdges(config.edges || []);
         }).catch((error) => {
           console.error('Failed to load workflow:', error);
@@ -91,7 +114,9 @@ export default function WorkflowEditorPage() {
     setSelectedNode(node);
   }, []);
 
-  const onPaneClick = useCallback(() => {
+  const onPaneClick = useCallback((event: React.MouseEvent) => {
+    event.preventDefault();
+    event.stopPropagation();
     setSelectedNode(null);
   }, []);
 
@@ -158,8 +183,18 @@ export default function WorkflowEditorPage() {
 
     setIsSaving(true);
     try {
+      const backendNodes: WorkflowNode[] = nodes.map((node) => ({
+        id: node.id,
+        type: node.data.nodeType,
+        position: node.position,
+        data: {
+          label: node.data.label,
+          nodeType: node.data.nodeType,
+          config: node.data.config,
+        },
+      }));
       const workflowConfig: WorkflowConfig = {
-        nodes: nodes as WorkflowNode[],
+        nodes: backendNodes,
         edges: edges as WorkflowEdgeType[],
       };
 
@@ -167,7 +202,7 @@ export default function WorkflowEditorPage() {
         await updateWorkflow(parseInt(id), { config: workflowConfig });
         toast.success('Workflow updated successfully');
       } else {
-        const name = `Workflow ${new Date().toLocaleDateString()}`;
+        const name = newWorkflowName.trim() || `Workflow ${new Date().toLocaleDateString()}`;
         const workflow = await createWorkflow({ name, config: workflowConfig });
         if (workflow) {
           toast.success('Workflow created successfully');
@@ -179,7 +214,7 @@ export default function WorkflowEditorPage() {
     } finally {
       setIsSaving(false);
     }
-  }, [user, isEditing, id, nodes, edges, createWorkflow, updateWorkflow, navigate]);
+  }, [user, isEditing, id, nodes, edges, createWorkflow, updateWorkflow, navigate, newWorkflowName]);
 
   const runWorkflow = useCallback(async () => {
     if (!id || isRunning) return;
@@ -224,6 +259,10 @@ export default function WorkflowEditorPage() {
         isSaving={isSaving}
         isRunning={isRunning}
         canRun={!!id && nodes.length > 0}
+        isCreating={!isEditing}
+        workflowName={newWorkflowName}
+        onWorkflowNameChange={setNewWorkflowName}
+        nodeCount={nodes.length}
       />
 
       <div className="flex-1 flex overflow-hidden">
