@@ -67,7 +67,9 @@ class LLMNode(BaseNode):
 
     async def execute(self, inputs: Dict[str, Any], context: Dict[str, Any]) -> Dict[str, Any]:
         """Execute LLM call"""
-        self._validate_config(["user_prompt"])
+        # user_prompt is optional - if not provided, use empty string
+        if "user_prompt" not in self.config:
+            self.user_prompt_template = ""
 
         # Get API key from context or database
         api_key = await self._get_api_key(context.get("db"), self.provider)
