@@ -87,16 +87,46 @@ def test_workflow_executor():
         # Create a mock DB session (we won't actually execute LLM call without API key)
         db = SessionLocal()
         try:
-            # Create a dummy execution record
+            # Create required User and Workflow records first
+            from app.models.user import User
+            from app.models.workflow import Workflow
+            
+            # Check if user exists, create if not
+            user = db.query(User).filter_by(id=1).first()
+            if not user:
+                user = User(
+                    email="test@tradingflow.com",
+                    username="testuser",
+                    hashed_password="hashed_password_placeholder"
+                )
+                db.add(user)
+                db.flush()  # Get user ID
+                print(f"   Created test user (id: {user.id})")
+            
+            # Check if workflow exists, create if not
+            workflow = db.query(Workflow).filter_by(id=1).first()
+            if not workflow:
+                workflow = Workflow(
+                    name="Test Workflow",
+                    description="Test workflow for testing",
+                    owner_id=user.id,
+                    config=workflow_config
+                )
+                db.add(workflow)
+                db.flush()  # Get workflow ID
+                print(f"   Created test workflow (id: {workflow.id})")
+
+            # Now create a dummy execution record
             from app.models.workflow_execution import WorkflowExecution
             execution = WorkflowExecution(
-                workflow_id=1,
-                triggered_by=1,
+                workflow_id=workflow.id,
+                triggered_by=user.id,
                 status="pending"
             )
             db.add(execution)
             db.commit()
             db.refresh(execution)
+            print(f"   Created test execution (id: {execution.id})")
 
             # Try to get node class
             node_class = get_node_class("llm")
@@ -185,7 +215,7 @@ def main():
 
 if __name__ == "__main__":
     try:
-        success = asyncio.run(main())
+        success = main()
         exit(0 if success else 1)
     except KeyboardInterrupt:
         print("\n\nInterrupted by user")
