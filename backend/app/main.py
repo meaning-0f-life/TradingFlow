@@ -9,7 +9,7 @@ from dotenv import load_dotenv
 
 from app.core.config import settings
 from app.core.database import engine, Base
-from app.api import auth, workflows, nodes, execution
+from app.api import auth, workflows, nodes, execution, keys
 from app.core.websocket import websocket_endpoint
 
 load_dotenv()
@@ -47,6 +47,7 @@ app.include_router(auth.router, prefix="/api/auth", tags=["authentication"])
 app.include_router(workflows.router, prefix="/api/workflows", tags=["workflows"])
 app.include_router(nodes.router, prefix="/api/nodes", tags=["nodes"])
 app.include_router(execution.router, prefix="/api/execution", tags=["execution"])
+app.include_router(keys.router, prefix="/api/keys", tags=["api-keys"])
 
 # WebSocket endpoint
 app.websocket_route("/ws")(websocket_endpoint)
