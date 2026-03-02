@@ -25,12 +25,12 @@ TradingFlow/
 │   ├── app/
 │   │   ├── core/      # Engine, security, config
 │   │   ├── nodes/     # Node implementations
-│   │   ├── agents/    # Multi-agent systems (LangGraph - coming soon)
+│   │   ├── agents/    # Multi-agent systems (LangGraph - planned)
 │   │   ├── services/  # External services (DB, Vector DB)
 │   │   ├── models/    # Database models & Pydantic schemas
 │   │   └── api/       # REST API endpoints
 │   └── tests/
-├── frontend/          # React + TypeScript (to be implemented)
+├── frontend/          # React + TypeScript (Vite + React Flow)
 ├── docker-compose.yml # Infrastructure services
 └── .env               # Environment configuration
 ```
@@ -39,7 +39,7 @@ TradingFlow/
 
 ### Prerequisites
 
-- Python 3.11+
+- Python 3.9+
 - Docker & Docker Compose
 - Node.js 18+ (for frontend development)
 
@@ -50,12 +50,17 @@ TradingFlow/
 cd TradingFlow
 
 # Create virtual environment
-python -m venv venv
+python3 -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
 
-# Install dependencies
+# Install backend dependencies
 cd backend
-pip install -r requirements.txt
+pip3 install -r requirements.txt
+cd ..
+
+# Install frontend dependencies
+cd frontend
+npm install
 cd ..
 ```
 
@@ -83,15 +88,36 @@ docker-compose ps
 
 ```bash
 cd backend
-uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+python3 -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
 The API will be available at http://localhost:8000
 
-### 5. API Documentation
+### 5. Run the Frontend
+
+```bash
+cd frontend
+npm run dev
+```
+
+The frontend will be available at http://localhost:3000 (or next available port)
+
+### 6. API Documentation
 
 - Swagger UI: http://localhost:8000/docs
 - ReDoc: http://localhost:8000/redoc
+
+### 7. Stop All Services
+
+```bash
+# Stop backend (Ctrl+C in its terminal)
+# Stop frontend (Ctrl+C in its terminal)
+
+# Stop infrastructure
+docker-compose down
+```
+
+For detailed management instructions, see [EXECUTE.md](EXECUTE.md).
 
 ## Core Concepts
 
@@ -99,11 +125,14 @@ The API will be available at http://localhost:8000
 
 Nodes are the building blocks of your workflows. Each node performs a specific operation:
 
+**Currently Implemented:**
 - **LLM Node**: Call language models (OpenAI, Anthropic, OpenRouter, DeepSeek)
-- **Data Fetcher**: Retrieve market data from various sources
-- **Agent Node**: Run multi-agent analysis pipelines (coming soon)
-- **Trading Node**: Execute trades on exchanges (coming soon)
-- **RAG Node**: Query vector database for context (coming soon)
+- **Data Fetcher**: Retrieve market data (Yahoo Finance, Alpha Vantage, Binance, Bybit, MT5)
+
+**Planned (Coming Soon):**
+- **Agent Node**: Multi-agent analysis pipelines (LangGraph)
+- **Trading Node**: Execute trades on exchanges
+- **RAG Node**: Query vector database for context
 
 ### Workflows
 
@@ -218,7 +247,7 @@ backend/
 │   │   └── websocket.py     # WS connection manager
 │   ├── models/              # SQLAlchemy & Pydantic models
 │   ├── nodes/               # Node implementations
-│   ├── agents/              # Multi-agent systems (coming soon)
+│   ├── agents/              # Multi-agent systems (planned)
 │   ├── services/            # External services
 │   └── api/                 # REST endpoints
 └── tests/                   # Unit & integration tests
@@ -292,17 +321,17 @@ gunicorn app.main:app -w 4 -k uvicorn.workers.UvicornWorker -b :8000
 
 - **Reverse Proxy**: Nginx or Traefik
 - **Process Manager**: Gunicorn with Uvicorn workers
-- **Monitoring**: Prometheus + Grafana (coming soon)
+- **Monitoring**: Prometheus + Grafana (planned for future)
 - **Logging**: ELK stack or Loki
 
 ## Roadmap
 
 - [x] Phase 1: Core infrastructure & basic nodes (LLM, Data)
-- [ ] Phase 2: Multi-agent system (LangGraph integration)
-- [ ] Phase 3: RAG & vector database integration
-- [ ] Phase 4: Trading execution (Binance, Bybit, MT5)
-- [ ] Phase 5: Backtesting engine
-- [ ] Phase 6: Frontend visual editor (React Flow)
+- [x] Phase 2: Frontend visual editor (React Flow) ✅
+- [ ] Phase 3: Multi-agent system (LangGraph integration)
+- [ ] Phase 4: RAG & vector database integration
+- [ ] Phase 5: Trading execution enhancements
+- [ ] Phase 6: Backtesting engine
 - [ ] Phase 7: Advanced analytics & dashboards
 - [ ] Phase 8: Plugin system for custom nodes
 
