@@ -175,24 +175,37 @@ class LLMNode(BaseNode):
             }
         }
 
-    async def _get_api_key(self, db, service: str) -> str:
+    async def _get_api_key(self, db, provider: str) -> str:
         """Get encrypted API key from database and decrypt it"""
         from sqlalchemy.orm import Session
-        from app.models.api_key import APIKey
+        from app.models.api_key import APIKey, ServiceEnum
         from app.services.encryption import EncryptionService
 
         if not db:
             raise ValueError("Database session required to fetch API key")
 
+        # Map provider name to ServiceEnum value
+        provider_to_service = {
+            "openai": ServiceEnum.openai,
+            "anthropic": ServiceEnum.anthropic,
+            "openrouter": ServiceEnum.open_router,
+            "deepseek": ServiceEnum.deepseek
+        }
+
+        if provider not in provider_to_service:
+            raise ValueError(f"Unsupported provider for API key lookup: {provider}")
+
+        service_enum = provider_to_service[provider]
+
         # For now, get the first active key for this service
         # In production, you'd get the key for the current user
         api_key_record = db.query(APIKey).filter(
-            APIKey.service == service,
+            APIKey.service == service_enum,
             APIKey.is_active == True
         ).first()
 
         if not api_key_record:
-            raise ValueError(f"No API key found for service: {service}. Please add one in settings.")
+            raise ValueError(f"No API key found for service: {provider}. Please add one in settings.")
 
         encryption_service = EncryptionService(settings.ENCRYPTION_KEY)
         return encryption_service.decrypt(api_key_record.encrypted_key)
