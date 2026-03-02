@@ -11,10 +11,12 @@ from app.core.engine import WorkflowExecutor
 
 router = APIRouter()
 
-def run_workflow_background(execution_id: int, workflow_config: dict):
+async def run_workflow_background(execution_id: int, workflow_config: dict):
     """Background task to run workflow execution"""
     # Create new DB session for background task
     db = SessionLocal()
+    execution = None
+    executor = None
     try:
         # Get execution record
         execution = db.query(WorkflowExecution).filter(WorkflowExecution.id == execution_id).first()
@@ -40,14 +42,15 @@ def run_workflow_background(execution_id: int, workflow_config: dict):
         db.commit()
 
     except Exception as e:
-        # Update execution with error
-        execution.status = "failed"
-        execution.error_message = str(e)
-        execution.result_data = {
-            "partial_results": getattr(executor, 'results', {}),
-            "errors": getattr(executor, 'errors', [])
-        }
-        db.commit()
+        # Update execution with error if it exists
+        if execution is not None:
+            execution.status = "failed"
+            execution.error_message = str(e)
+            execution.result_data = {
+                "partial_results": getattr(executor, 'results', {}),
+                "errors": getattr(executor, 'errors', [])
+            }
+            db.commit()
         print(f"Workflow execution {execution_id} failed: {e}")
 
     finally:
