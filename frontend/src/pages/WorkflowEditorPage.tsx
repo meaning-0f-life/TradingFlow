@@ -115,9 +115,11 @@ export default function WorkflowEditorPage() {
   }, []);
 
   const onPaneClick = useCallback((event: React.MouseEvent) => {
-    event.preventDefault();
-    event.stopPropagation();
-    setSelectedNode(null);
+    // Only deselect node if clicking directly on the pane (not on a node or edge)
+    // This prevents unwanted navigation or state changes
+    if (event.target === event.currentTarget) {
+      setSelectedNode(null);
+    }
   }, []);
 
   const addNode = useCallback((nodeType: string) => {

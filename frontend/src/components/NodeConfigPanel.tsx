@@ -39,6 +39,19 @@ export default function NodeConfigPanel({
   const renderInput = (param: UIParameter) => {
     const value = config[param.name] ?? param.default;
 
+    // Get options from either enum (legacy) or options (new format)
+    const getOptions = () => {
+      if (param.options && param.options.length > 0) {
+        return param.options;
+      }
+      if (param.enum && param.enum.length > 0) {
+        return param.enum.map(opt => ({ value: opt, label: opt }));
+      }
+      return [];
+    };
+
+    const options = getOptions();
+
     switch (param.type) {
       case 'string':
         return (
@@ -80,12 +93,36 @@ export default function NodeConfigPanel({
             onChange={(e) => handleChange(param.name, e.target.value)}
             className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
-            {param.enum?.map((opt) => (
-              <option key={opt} value={opt}>
-                {opt}
+            {options.map((opt) => (
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
               </option>
             ))}
           </select>
+        );
+
+      case 'multi_select':
+        const selectedValues = Array.isArray(value) ? value : [];
+        const handleToggle = (optionValue: string) => {
+          const newValues = selectedValues.includes(optionValue)
+            ? selectedValues.filter(v => v !== optionValue)
+            : [...selectedValues, optionValue];
+          handleChange(param.name, newValues);
+        };
+        return (
+          <div className="space-y-2">
+            {options.map((opt) => (
+              <label key={opt.value} className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={selectedValues.includes(opt.value)}
+                  onChange={() => handleToggle(opt.value)}
+                  className="w-4 h-4 rounded border-slate-600 text-blue-600 focus:ring-blue-500"
+                />
+                <span className="text-sm text-slate-300">{opt.label}</span>
+              </label>
+            ))}
+          </div>
         );
 
       default:

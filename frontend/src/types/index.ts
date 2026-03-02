@@ -132,7 +132,9 @@ export interface UIParameter {
   description?: string;
   minimum?: number;
   maximum?: number;
-  enum?: string[];
+  enum?: string[]; // Legacy simple enum format
+  options?: Array<{ value: string; label: string }>; // New rich format with labels
+  multiple?: boolean; // For multi_select type
 }
 
 export interface UIOutput {
