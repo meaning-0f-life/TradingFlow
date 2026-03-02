@@ -16,6 +16,6 @@ class User(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 
-    # Relationships
+    # Relationships - back_populates will be resolved when all models are imported
     workflows = relationship("Workflow", back_populates="owner")
     api_keys = relationship("APIKey", back_populates="owner")

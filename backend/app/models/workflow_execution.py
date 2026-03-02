@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Boolean, DateTime, JSON, Text
+from sqlalchemy import Column, Integer, String, Boolean, DateTime, JSON, Text, ForeignKey
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from app.core.database import Base
@@ -8,8 +8,8 @@ class WorkflowExecution(Base):
     __tablename__ = "workflow_executions"
 
     id = Column(Integer, primary_key=True, index=True)
-    workflow_id = Column(Integer, nullable=False)
-    triggered_by = Column(Integer, nullable=False)  # User ID
+    workflow_id = Column(Integer, ForeignKey("workflows.id"), nullable=False)
+    triggered_by = Column(Integer, ForeignKey("users.id"), nullable=False)
     status = Column(String, default="pending")  # pending, running, completed, failed
     input_data = Column(JSON, default=dict)  # Input parameters
     result_data = Column(JSON, default=dict)  # Output results

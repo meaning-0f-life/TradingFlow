@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Boolean, DateTime, JSON, Text
+from sqlalchemy import Column, Integer, String, Boolean, DateTime, JSON, Text, ForeignKey
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from app.core.database import Base
@@ -10,7 +10,7 @@ class Workflow(Base):
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, nullable=False)
     description = Column(Text, nullable=True)
-    owner_id = Column(Integer, nullable=False)
+    owner_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     is_active = Column(Boolean, default=True)
     config = Column(JSON, default=dict)  # Stores the workflow graph (nodes, edges)
     version = Column(Integer, default=1)
@@ -19,4 +19,4 @@ class Workflow(Base):
 
     # Relationships
     owner = relationship("User", back_populates="workflows")
-    executions = relationship("WorkflowExecution", back_populates="workflow")
+    executions = relationship("WorkflowExecution", back_populates="workflow", cascade="all, delete-orphan")

@@ -1,9 +1,6 @@
 from cryptography.fernet import Fernet
-from cryptography.hazmat.primitives import hashes
-from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2
+import hashlib
 import base64
-import os
-from typing import Union
 
 class EncryptionService:
     """Service for encrypting and decrypting sensitive data"""
@@ -18,14 +15,10 @@ class EncryptionService:
         if not master_key:
             raise ValueError("Master encryption key is required")
 
-        # Derive a key from the master key
-        kdf = PBKDF2(
-            algorithm=hashes.SHA256(),
-            length=32,
-            salt=b'tradingflow_salt',  # In production, use a random salt per installation
-            iterations=100000,
-        )
-        key = base64.urlsafe_b64encode(kdf.derive(master_key.encode()))
+        # Derive a 32-byte key from the master key using SHA256
+        key_bytes = hashlib.sha256(master_key.encode()).digest()
+        # Encode to URL-safe base64 for Fernet
+        key = base64.urlsafe_b64encode(key_bytes)
         self.cipher = Fernet(key)
 
     def encrypt(self, plaintext: str) -> str:
