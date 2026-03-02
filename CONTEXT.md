@@ -802,7 +802,7 @@ ws.onmessage = (event) => {
 
 ## 📄 License
 
-MIT License - see LICENSE file
+GNU LGPLv3 License - see LICENSE file for details
 
 ---
 
