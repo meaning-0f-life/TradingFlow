@@ -25,6 +25,8 @@ export default function ApiKeysPage() {
   const [error, setError] = useState<string | null>(null);
   const [showModal, setShowModal] = useState(false);
   const [showKey, setShowKey] = useState<Record<number, boolean>>({});
+  const [decryptedKeys, setDecryptedKeys] = useState<Record<number, string>>({});
+  const [loadingKeyId, setLoadingKeyId] = useState<number | null>(null);
   const [newKey, setNewKey] = useState<APIKeyCreate>({ name: '', service: 'openai', key: '' });
 
   const fetchApiKeys = async () => {
@@ -67,8 +69,24 @@ export default function ApiKeysPage() {
     }
   };
 
-  const toggleShowKey = (id: number) => {
-    setShowKey((prev) => ({ ...prev, [id]: !prev[id] }));
+  const toggleShowKey = async (id: number) => {
+    // If we're about to hide, just toggle
+    if (showKey[id]) {
+      setShowKey((prev) => ({ ...prev, [id]: !prev[id] }));
+      return;
+    }
+
+    // If we're about to show, fetch the decrypted key first
+    setLoadingKeyId(id);
+    try {
+      const keyData = await apiKeysAPI.getById(id);
+      setDecryptedKeys((prev) => ({ ...prev, [id]: keyData.key }));
+      setShowKey((prev) => ({ ...prev, [id]: true }));
+    } catch (error: any) {
+      setError(error.response?.data?.detail || 'Failed to fetch API key');
+    } finally {
+      setLoadingKeyId(null);
+    }
   };
 
   return (
@@ -143,13 +161,22 @@ export default function ApiKeysPage() {
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-300 font-mono">
                     <div className="flex items-center gap-2">
                       <span className="truncate max-w-xs">
-                        {showKey[key.id] ? key.name : '••••••••••••••••'}
+                        {loadingKeyId === key.id ? (
+                          'Loading...'
+                        ) : showKey[key.id] ? (
+                          decryptedKeys[key.id] || key.name
+                        ) : (
+                          '••••••••••••••••'
+                        )}
                       </span>
                       <button
                         onClick={() => toggleShowKey(key.id)}
                         className="text-slate-400 hover:text-white"
+                        disabled={loadingKeyId === key.id}
                       >
-                        {showKey[key.id] ? (
+                        {loadingKeyId === key.id ? (
+                          <LoadingSpinner size="sm" />
+                        ) : showKey[key.id] ? (
                           <EyeSlashIcon className="w-4 h-4" />
                         ) : (
                           <EyeIcon className="w-4 h-4" />

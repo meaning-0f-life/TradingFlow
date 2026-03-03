@@ -20,6 +20,36 @@ def get_api_keys(
     keys = db.query(APIKey).filter(APIKey.owner_id == current_user.id).all()
     return keys
 
+@router.get("/{key_id}")
+def get_api_key(
+    key_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Get a single API key with decrypted value"""
+    api_key = db.query(APIKey).filter(
+        APIKey.id == key_id,
+        APIKey.owner_id == current_user.id
+    ).first()
+    if not api_key:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="API key not found"
+        )
+    
+    # Decrypt the API key
+    encryption_service = EncryptionService(settings.ENCRYPTION_KEY)
+    decrypted_key = encryption_service.decrypt(api_key.encrypted_key)
+    
+    return {
+        "id": api_key.id,
+        "name": api_key.name,
+        "service": api_key.service,
+        "is_active": api_key.is_active,
+        "created_at": api_key.created_at,
+        "key": decrypted_key
+    }
+
 @router.post("/", response_model=APIKeyResponse)
 def create_api_key(
     key_data: APIKeyCreate,
