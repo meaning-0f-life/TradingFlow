@@ -14,6 +14,8 @@ interface WorkflowToolbarProps {
   isCreating?: boolean;
   workflowName?: string;
   onWorkflowNameChange?: (name: string) => void;
+  workflowDescription?: string;
+  onWorkflowDescriptionChange?: (description: string) => void;
   nodeCount?: number;
 }
 
@@ -28,6 +30,8 @@ export default function WorkflowToolbar({
   isCreating = false,
   workflowName = '',
   onWorkflowNameChange,
+  workflowDescription = '',
+  onWorkflowDescriptionChange,
   nodeCount = 0,
 }: WorkflowToolbarProps) {
   const [showAddMenu, setShowAddMenu] = useState(false);
@@ -45,7 +49,7 @@ export default function WorkflowToolbar({
       {/* Left side - Different for creating vs editing */}
       <div className="flex items-center gap-4">
         {isCreating ? (
-          <div className="flex items-center gap-2">
+          <div className="flex flex-col gap-2">
             <input
               type="text"
               value={workflowName}
@@ -53,10 +57,17 @@ export default function WorkflowToolbar({
               placeholder="Enter workflow name..."
               className="px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
+            <textarea
+              value={workflowDescription}
+              onChange={(e) => onWorkflowDescriptionChange?.(e.target.value)}
+              placeholder="Enter workflow description (optional)..."
+              rows={2}
+              className="px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+            />
             <button
               onClick={onSave}
               disabled={isSaving}
-              className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-800 text-white rounded-lg transition-colors"
+              className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-800 text-white rounded-lg transition-colors w-fit"
             >
               {isSaving ? (
                 <>
@@ -70,6 +81,22 @@ export default function WorkflowToolbar({
           </div>
         ) : (
           <>
+            <div className="flex flex-col gap-2">
+              <input
+                type="text"
+                value={workflowName}
+                onChange={(e) => onWorkflowNameChange?.(e.target.value)}
+                placeholder="Workflow name..."
+                className="px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+              <textarea
+                value={workflowDescription}
+                onChange={(e) => onWorkflowDescriptionChange?.(e.target.value)}
+                placeholder="Workflow description (optional)..."
+                rows={2}
+                className="px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+              />
+            </div>
             <div className="relative">
               <button
                 onClick={() => setShowAddMenu(!showAddMenu)}

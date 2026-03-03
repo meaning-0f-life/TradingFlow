@@ -46,6 +46,7 @@ export default function WorkflowEditorPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [isRunning, setIsRunning] = useState(false);
   const [newWorkflowName, setNewWorkflowName] = useState('');
+  const [newWorkflowDescription, setNewWorkflowDescription] = useState('');
 
   // Load node types on mount
   useEffect(() => {
@@ -88,6 +89,8 @@ export default function WorkflowEditorPage() {
         });
         setNodes(rfNodes);
         setEdges(config.edges || []);
+        setNewWorkflowName(currentWorkflow.name);
+        setNewWorkflowDescription(currentWorkflow.description || '');
       } else {
         // Fetch from API
         workflowsAPI.getById(workflowId).then((workflow) => {
@@ -122,6 +125,8 @@ export default function WorkflowEditorPage() {
           });
           setNodes(rfNodes);
           setEdges(config.edges || []);
+          setNewWorkflowName(workflow.name);
+          setNewWorkflowDescription(workflow.description || '');
         }).catch((error) => {
           console.error('Failed to load workflow:', error);
           toast.error('Failed to load workflow');
@@ -241,11 +246,16 @@ export default function WorkflowEditorPage() {
       };
 
       if (isEditing && id) {
-        await updateWorkflow(parseInt(id), { config: workflowConfig });
+        await updateWorkflow(parseInt(id), {
+          config: workflowConfig,
+          name: newWorkflowName.trim() || undefined,
+          description: newWorkflowDescription.trim() || undefined,
+        });
         toast.success('Workflow updated successfully');
       } else {
         const name = newWorkflowName.trim() || `Workflow ${new Date().toLocaleDateString()}`;
-        const workflow = await createWorkflow({ name, config: workflowConfig });
+        const description = newWorkflowDescription.trim() || undefined;
+        const workflow = await createWorkflow({ name, description, config: workflowConfig });
         if (workflow) {
           toast.success('Workflow created successfully');
           navigate(`/workflows/${workflow.id}`);
@@ -256,7 +266,7 @@ export default function WorkflowEditorPage() {
     } finally {
       setIsSaving(false);
     }
-  }, [user, isEditing, id, nodes, edges, createWorkflow, updateWorkflow, navigate, newWorkflowName]);
+  }, [user, isEditing, id, nodes, edges, createWorkflow, updateWorkflow, navigate, newWorkflowName, newWorkflowDescription]);
 
   const runWorkflow = useCallback(async () => {
     if (!id || isRunning) return;
@@ -304,6 +314,8 @@ export default function WorkflowEditorPage() {
         isCreating={!isEditing}
         workflowName={newWorkflowName}
         onWorkflowNameChange={setNewWorkflowName}
+        workflowDescription={newWorkflowDescription}
+        onWorkflowDescriptionChange={setNewWorkflowDescription}
         nodeCount={nodes.length}
       />
 
