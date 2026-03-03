@@ -26,6 +26,7 @@ import CustomNode from '@/components/CustomNode';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import { toast } from 'react-hot-toast';
 import { executionAPI } from '@/services/api';
+import { Dialog } from '@headlessui/react';
 
 const nodeTypes: NodeTypes = {
   custom: CustomNode,
@@ -47,6 +48,8 @@ export default function WorkflowEditorPage() {
   const [isRunning, setIsRunning] = useState(false);
   const [newWorkflowName, setNewWorkflowName] = useState('');
   const [newWorkflowDescription, setNewWorkflowDescription] = useState('');
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [nodeToDelete, setNodeToDelete] = useState<Node | null>(null);
 
   // Load node types on mount
   useEffect(() => {
@@ -136,6 +139,23 @@ export default function WorkflowEditorPage() {
     }
   }, [isEditing, id, currentWorkflow, setCurrentWorkflow, setNodes, setEdges, navigate, availableNodeTypes]);
 
+  // Keyboard shortcut for deleting nodes
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if ((event.key === 'Delete' || event.key === 'Backspace') && selectedNode) {
+        // Don't delete if user is typing in an input
+        if (event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement) {
+          return;
+        }
+        event.preventDefault();
+        handleDeleteNode(selectedNode);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [selectedNode]);
+
   const onConnect = useCallback(
     (params: Connection) => {
       setEdges((eds) => addEdge({
@@ -217,13 +237,38 @@ export default function WorkflowEditorPage() {
     });
   }, [selectedNode, setNodes]);
 
-  const deleteSelectedNode = useCallback(() => {
-    if (!selectedNode) return;
+  const handleDeleteNode = useCallback((node: Node) => {
+    setNodeToDelete(node);
+    setShowDeleteConfirm(true);
+  }, []);
 
-    setNodes((nds) => nds.filter((node) => node.id !== selectedNode.id));
-    setEdges((eds) => eds.filter((edge) => edge.source !== selectedNode.id && edge.target !== selectedNode.id));
-    setSelectedNode(null);
-  }, [selectedNode, setNodes, setEdges]);
+  const confirmDeleteNode = useCallback(() => {
+    if (!nodeToDelete) return;
+
+    setNodes((nds) => nds.filter((n) => n.id !== nodeToDelete.id));
+    setEdges((eds) => eds.filter((edge) => edge.source !== nodeToDelete.id && edge.target !== nodeToDelete.id));
+    
+    // If the deleted node is currently selected, clear selection
+    if (selectedNode?.id === nodeToDelete.id) {
+      setSelectedNode(null);
+    }
+    
+    toast.success('Node deleted successfully');
+    setShowDeleteConfirm(false);
+    setNodeToDelete(null);
+  }, [nodeToDelete, setNodes, setEdges, selectedNode]);
+
+  const cancelDeleteNode = useCallback(() => {
+    setShowDeleteConfirm(false);
+    setNodeToDelete(null);
+  }, []);
+
+  // Expose delete handler for NodeConfigPanel
+  const deleteSelectedNode = useCallback(() => {
+    if (selectedNode) {
+      handleDeleteNode(selectedNode);
+    }
+  }, [selectedNode, handleDeleteNode]);
 
   const saveWorkflow = useCallback(async () => {
     if (!user) return;
@@ -369,6 +414,36 @@ export default function WorkflowEditorPage() {
           </div>
         )}
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={showDeleteConfirm} onClose={cancelDeleteNode} className="relative z-50">
+        <div className="fixed inset-0 bg-black/70" aria-hidden="true" />
+        <div className="fixed inset-0 flex items-center justify-center p-4">
+          <Dialog.Panel className="bg-slate-800 border border-slate-700 rounded-lg shadow-xl max-w-md w-full p-6">
+            <Dialog.Title className="text-lg font-semibold text-white mb-2">
+              Delete Node
+            </Dialog.Title>
+            <Dialog.Description className="text-slate-300 mb-6">
+              Are you sure you want to delete the node "{nodeToDelete?.data.label}"?
+              This action cannot be undone and will also remove all connections to this node.
+            </Dialog.Description>
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={cancelDeleteNode}
+                className="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmDeleteNode}
+                className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors"
+              >
+                Delete
+              </button>
+            </div>
+          </Dialog.Panel>
+        </div>
+      </Dialog>
     </div>
   );
 }
