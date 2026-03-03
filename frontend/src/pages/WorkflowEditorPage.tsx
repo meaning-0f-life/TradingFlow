@@ -60,16 +60,32 @@ export default function WorkflowEditorPage() {
       if (currentWorkflow?.id === workflowId) {
         const config = currentWorkflow.config as WorkflowConfig;
         const backendNodes = config.nodes || [];
-        const rfNodes: Node[] = backendNodes.map((node: any) => ({
-          id: node.id,
-          type: 'custom',
-          position: node.position,
-          data: {
-            label: node.data?.label || node.type,
-            nodeType: node.type,
-            config: node.data?.config || {},
-          },
-        }));
+        const rfNodes: Node[] = backendNodes.map((node: any) => {
+          const nodeTypeInfo = availableNodeTypes[node.type];
+          let nodeConfig = node.data?.config || {};
+          
+          // Apply defaults from UI schema if config is missing values
+          if (nodeTypeInfo?.ui_schema?.parameters) {
+            const defaults: Record<string, any> = {};
+            nodeTypeInfo.ui_schema.parameters.forEach(param => {
+              if (param.default !== undefined && nodeConfig[param.name] === undefined) {
+                defaults[param.name] = param.default;
+              }
+            });
+            nodeConfig = { ...defaults, ...nodeConfig };
+          }
+          
+          return {
+            id: node.id,
+            type: 'custom',
+            position: node.position,
+            data: {
+              label: node.data?.label || node.type,
+              nodeType: node.type,
+              config: nodeConfig,
+            },
+          };
+        });
         setNodes(rfNodes);
         setEdges(config.edges || []);
       } else {
@@ -78,16 +94,32 @@ export default function WorkflowEditorPage() {
           setCurrentWorkflow(workflow);
           const config = workflow.config as WorkflowConfig;
           const backendNodes = config.nodes || [];
-          const rfNodes: Node[] = backendNodes.map((node: any) => ({
-            id: node.id,
-            type: 'custom',
-            position: node.position,
-            data: {
-              label: node.data?.label || node.type,
-              nodeType: node.type,
-              config: node.data?.config || {},
-            },
-          }));
+          const rfNodes: Node[] = backendNodes.map((node: any) => {
+            const nodeTypeInfo = availableNodeTypes[node.type];
+            let nodeConfig = node.data?.config || {};
+            
+            // Apply defaults from UI schema if config is missing values
+            if (nodeTypeInfo?.ui_schema?.parameters) {
+              const defaults: Record<string, any> = {};
+              nodeTypeInfo.ui_schema.parameters.forEach(param => {
+                if (param.default !== undefined && nodeConfig[param.name] === undefined) {
+                  defaults[param.name] = param.default;
+                }
+              });
+              nodeConfig = { ...defaults, ...nodeConfig };
+            }
+            
+            return {
+              id: node.id,
+              type: 'custom',
+              position: node.position,
+              data: {
+                label: node.data?.label || node.type,
+                nodeType: node.type,
+                config: nodeConfig,
+              },
+            };
+          });
           setNodes(rfNodes);
           setEdges(config.edges || []);
         }).catch((error) => {
@@ -97,7 +129,7 @@ export default function WorkflowEditorPage() {
         });
       }
     }
-  }, [isEditing, id, currentWorkflow, setCurrentWorkflow, setNodes, setEdges, navigate]);
+  }, [isEditing, id, currentWorkflow, setCurrentWorkflow, setNodes, setEdges, navigate, availableNodeTypes]);
 
   const onConnect = useCallback(
     (params: Connection) => {
@@ -124,6 +156,17 @@ export default function WorkflowEditorPage() {
     if (!nodeInfo) return;
 
     const id = `${nodeType}_${Date.now()}`;
+    
+    // Initialize config with default values from UI schema
+    const defaultConfig: Record<string, any> = {};
+    if (nodeInfo.ui_schema?.parameters) {
+      nodeInfo.ui_schema.parameters.forEach(param => {
+        if (param.default !== undefined) {
+          defaultConfig[param.name] = param.default;
+        }
+      });
+    }
+
     const newNode: Node = {
       id,
       type: 'custom',
@@ -131,7 +174,7 @@ export default function WorkflowEditorPage() {
       data: {
         label: nodeInfo.display_name,
         nodeType,
-        config: {},
+        config: defaultConfig,
       },
     };
 

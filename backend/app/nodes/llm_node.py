@@ -71,8 +71,11 @@ class LLMNode(BaseNode):
         if "user_prompt" not in self.config:
             self.user_prompt_template = ""
 
+        # Get user_id from context
+        user_id = context.get("user_id")
+
         # Get API key from context or database
-        api_key = await self._get_api_key(context.get("db"), self.provider)
+        api_key = await self._get_api_key(context.get("db"), self.provider, user_id)
 
         # Prepare prompt with input substitution
         prompt = self._prepare_prompt(inputs)
@@ -177,7 +180,7 @@ class LLMNode(BaseNode):
             }
         }
 
-    async def _get_api_key(self, db, provider: str) -> str:
+    async def _get_api_key(self, db, provider: str, user_id: int = None) -> str:
         """Get encrypted API key from database and decrypt it"""
         from sqlalchemy.orm import Session
         from app.models.api_key import APIKey, ServiceEnum
@@ -199,12 +202,17 @@ class LLMNode(BaseNode):
 
         service_enum = provider_to_service[provider]
 
-        # For now, get the first active key for this service
-        # In production, you'd get the key for the current user
-        api_key_record = db.query(APIKey).filter(
+        # Build query to get active API key
+        query = db.query(APIKey).filter(
             APIKey.service == service_enum,
             APIKey.is_active == True
-        ).first()
+        )
+        
+        # Filter by user_id if provided
+        if user_id:
+            query = query.filter(APIKey.owner_id == user_id)
+
+        api_key_record = query.first()
 
         if not api_key_record:
             raise ValueError(f"No API key found for service: {provider}. Please add one in settings.")

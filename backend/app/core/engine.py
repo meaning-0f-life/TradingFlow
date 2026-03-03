@@ -3,6 +3,7 @@ import asyncio
 import logging
 from sqlalchemy.orm import Session
 from app.core.websocket import send_execution_update
+from app.models.workflow_execution import WorkflowExecution
 
 logger = logging.getLogger(__name__)
 
@@ -43,13 +44,19 @@ class WorkflowExecutor:
             for node in nodes:
                 self.nodes[node["id"]] = node
 
+            # Get user_id from execution record
+            execution = self.db.query(WorkflowExecution).filter(
+                WorkflowExecution.id == self.execution_id
+            ).first()
+            user_id = execution.triggered_by if execution else None
+
             # Build and validate dependency graph
             dependencies = self._build_dependencies(nodes, edges)
             self._validate_dependencies(dependencies)
             logger.info(f"Built dependency graph for {len(nodes)} nodes")
 
             # Execute nodes in topological order with concurrency control
-            await self._execute_nodes(dependencies)
+            await self._execute_nodes(dependencies, user_id)
 
             await self._send_update("completed", {
                 "message": "Workflow executed successfully",
@@ -139,7 +146,7 @@ class WorkflowExecutor:
             if node_id in self.nodes:
                 dfs(node_id)
 
-    async def _execute_nodes(self, dependencies: Dict[str, List[str]]):
+    async def _execute_nodes(self, dependencies: Dict[str, List[str]], user_id: int = None):
         """Execute nodes respecting dependencies with concurrency control"""
         executed = set()
         in_progress = set()
@@ -181,7 +188,7 @@ class WorkflowExecutor:
             tasks = []
             for node_id in ready_nodes:
                 # Create coroutine and task
-                coro = self._execute_node_with_limit(node_id, semaphore)
+                coro = self._execute_node_with_limit(node_id, semaphore, user_id)
                 task = asyncio.create_task(coro)
                 self._running_tasks.add(task)  # Add immediately to avoid race condition
                 tasks.append(task)
@@ -224,19 +231,20 @@ class WorkflowExecutor:
         if iterations >= max_iterations:
             raise RuntimeError(f"Workflow execution exceeded maximum iterations ({max_iterations})")
 
-    async def _execute_node_with_limit(self, node_id: str, semaphore: asyncio.Semaphore) -> Dict[str, Any]:
+    async def _execute_node_with_limit(self, node_id: str, semaphore: asyncio.Semaphore, user_id: int = None) -> Dict[str, Any]:
         """Execute node with semaphore control"""
         async with semaphore:
-            return await self._execute_node(node_id)
+            return await self._execute_node(node_id, user_id)
 
-    async def _execute_node(self, node_id: str) -> Dict[str, Any]:
+    async def _execute_node(self, node_id: str, user_id: int = None) -> Dict[str, Any]:
         """Execute a single node"""
         if self._shutdown_event.is_set():
             raise RuntimeError("Workflow execution cancelled due to shutdown")
 
         node = self.nodes[node_id]
         node_type = node.get("type")
-        config = node.get("config", {})
+        # Get config from node.data.config (frontend structure)
+        config = node.get("data", {}).get("config", {})
 
         logger.debug(
             f"Executing node {node_id} (type: {node_type})",
@@ -259,10 +267,11 @@ class WorkflowExecutor:
             # Prepare inputs from connected nodes
             inputs = self._gather_inputs(node_id)
 
-            # Execute node
+            # Execute node with context including user_id
             result = await node_instance.execute(inputs, {
                 "execution_id": self.execution_id,
-                "db": self.db
+                "db": self.db,
+                "user_id": user_id
             })
 
             await self._send_update("node_completed", {
