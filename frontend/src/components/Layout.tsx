@@ -31,7 +31,7 @@ export default function Layout({ children }: LayoutProps) {
   };
 
   return (
-    <div className="min-h-screen bg-slate-900 flex">
+    <div className="h-screen bg-slate-900 flex">
       {/* Sidebar */}
       <div className="w-64 bg-slate-800 border-r border-slate-700 flex flex-col">
         <div className="p-6 border-b border-slate-700">
@@ -77,8 +77,8 @@ export default function Layout({ children }: LayoutProps) {
       </div>
 
       {/* Main content */}
-      <div className="flex-1 overflow-auto">
-        <main className="p-8 h-full">
+      <div className="flex-1 min-h-0 overflow-auto">
+        <main className="h-full p-8">
           {children}
         </main>
       </div>

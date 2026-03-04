@@ -364,9 +364,9 @@ export default function WorkflowEditorPage() {
         nodeCount={nodes.length}
       />
 
-      <div className="flex-1 flex overflow-hidden">
+      <div className="flex-1 flex min-h-0">
         {/* React Flow Canvas */}
-        <div className="flex-1 h-full">
+        <div className="flex-1 min-h-0 min-w-0">
           <ReactFlow
             nodes={nodes}
             edges={edges}
@@ -397,7 +397,7 @@ export default function WorkflowEditorPage() {
 
         {/* Configuration Panel */}
         {selectedNode && (
-          <div className="w-80 bg-slate-800 border-l border-slate-700 overflow-y-auto">
+          <div className="w-80 min-w-0 bg-slate-800 border-l border-slate-700 overflow-auto h-full max-h-full">
             <NodeConfigPanel
               node={{
                 id: selectedNode.id,
