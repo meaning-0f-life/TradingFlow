@@ -11,12 +11,17 @@ import type { ReactNode } from 'react';
 
 interface LayoutProps {
   children: ReactNode;
+  noPadding?: boolean;
 }
 
-export default function Layout({ children }: LayoutProps) {
+export default function Layout({ children, noPadding: explicitNoPadding }: LayoutProps) {
   const location = useLocation();
   const navigate = useNavigate();
   const { logout, user } = useAuthStore();
+
+  // Automatically remove padding for workflow editor pages
+  const isWorkflowEditor = location.pathname.startsWith('/workflows/');
+  const noPadding = explicitNoPadding || isWorkflowEditor;
 
   const navigation = [
     { name: 'Dashboard', href: '/', icon: HomeIcon },
@@ -78,7 +83,7 @@ export default function Layout({ children }: LayoutProps) {
 
       {/* Main content */}
       <div className="flex-1 min-h-0 overflow-auto">
-        <main className="h-full p-8">
+        <main className={`h-full ${!noPadding ? 'p-8' : ''}`}>
           {children}
         </main>
       </div>
