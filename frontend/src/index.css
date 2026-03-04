@@ -67,3 +67,32 @@ body {
 ::-webkit-scrollbar-thumb:hover {
   background: #64748b;
 }
+
+/* React Flow Controls dark theme */
+.react-flow__controls {
+  background-color: #1e293b !important;
+  border: 1px solid #475569 !important;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.react-flow__controls-button {
+  background-color: #334155 !important;
+  border-bottom: 1px solid #475569 !important;
+  fill: #e2e8f0 !important;
+}
+
+.react-flow__controls-button:hover {
+  background-color: #475569 !important;
+}
+
+.react-flow__controls-button:first-child {
+  border-top-left-radius: 8px;
+  border-top-right-radius: 8px;
+}
+
+.react-flow__controls-button:last-child {
+  border-bottom-left-radius: 8px;
+  border-bottom-right-radius: 8px;
+  border-bottom: none !important;
+}

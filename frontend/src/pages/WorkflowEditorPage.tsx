@@ -378,7 +378,7 @@ export default function WorkflowEditorPage() {
             nodeTypes={nodeTypes}
             fitView
           >
-            <Controls />
+            <Controls className="bg-slate-800 border border-slate-700" />
             <MiniMap
               nodeColor={(node) => {
                 const nodeType = node.data.nodeType;
@@ -388,6 +388,8 @@ export default function WorkflowEditorPage() {
                 };
                 return colors[nodeType] || '#6b7280';
               }}
+              className="bg-slate-800"
+              maskColor="rgba(15, 23, 42, 0.8)"
             />
             <Background variant={BackgroundVariant.Dots} gap={12} size={1} />
           </ReactFlow>
