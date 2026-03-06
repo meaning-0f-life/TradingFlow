@@ -24,22 +24,30 @@ export default function ExecutionHistoryPage() {
   const workflowId = searchParams.get('workflow_id');
 
   const { executions, isLoading, error, fetchExecutions } = useExecutionStore();
-  const { connect, disconnect, updates, isConnected } = useWebSocketStore();
+  const { subscribe, unsubscribe, getUpdatesForExecution, isConnected } = useWebSocketStore();
 
   useEffect(() => {
     fetchExecutions(workflowId ? parseInt(workflowId) : undefined);
   }, [fetchExecutions, workflowId]);
 
-  // Connect to WebSocket for latest execution
+  // Subscribe to WebSocket updates for all running executions
   useEffect(() => {
-    if (executions.length > 0 && executions[0].status === 'running') {
-      connect(executions[0].id);
-    }
-    return () => disconnect();
-  }, [executions, connect, disconnect]);
+    const runningExecutions = executions.filter(exec => exec.status === 'running');
+    runningExecutions.forEach(execution => {
+      subscribe(execution.id);
+    });
+
+    // Unsubscribe from executions that are no longer running
+    return () => {
+      // Note: We don't unsubscribe here because the WebSocket is global
+      // and other pages might still be using it. Unsubscription should happen
+      // when an execution completes or when the user leaves the app entirely
+    };
+  }, [executions, subscribe]);
 
   const getLatestUpdate = (executionId: number) => {
-    return updates.find((u) => u.execution_id === executionId);
+    const updates = getUpdatesForExecution(executionId);
+    return updates.length > 0 ? updates[updates.length - 1] : null;
   };
 
   const formatDate = (dateString: string | null) => {

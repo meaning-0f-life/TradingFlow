@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuthStore } from '@/store/authStore';
+import { useWebSocketStore } from '@/store/websocketStore';
 import Layout from '@/components/Layout';
 import LoginPage from '@/pages/LoginPage';
 import RegisterPage from '@/pages/RegisterPage';
@@ -29,12 +30,25 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 }
 
 function App() {
-  const { fetchCurrentUser } = useAuthStore();
+  const { fetchCurrentUser, isAuthenticated } = useAuthStore();
+  const { connect, disconnect } = useWebSocketStore();
 
   // Initialize auth state on app load
   useEffect(() => {
     fetchCurrentUser();
   }, [fetchCurrentUser]);
+
+  // Initialize global WebSocket connection when authenticated
+  useEffect(() => {
+    if (isAuthenticated) {
+      connect();
+    }
+    return () => {
+      if (!isAuthenticated) {
+        disconnect();
+      }
+    };
+  }, [isAuthenticated, connect, disconnect]);
 
   return (
     <Routes>

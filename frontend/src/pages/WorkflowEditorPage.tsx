@@ -321,14 +321,15 @@ export default function WorkflowEditorPage() {
       const execution = await executionAPI.run(parseInt(id));
       if (execution) {
         toast.success('Workflow execution started');
-        navigate(`/executions?workflow_id=${id}`);
+        // No automatic redirect - execution continues in background
+        // User can manually navigate to Execution History to see updates
       }
     } catch (error: any) {
       toast.error('Failed to start workflow execution');
     } finally {
       setIsRunning(false);
     }
-  }, [id, isRunning, navigate]);
+  }, [id, isRunning]);
 
   // Auto-save on changes (debounced in real app)
   useEffect(() => {
