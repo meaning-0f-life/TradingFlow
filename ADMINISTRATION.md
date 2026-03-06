@@ -588,16 +588,29 @@ curl -s -X DELETE http://localhost:8000/api/keys/1 \
 
 ## WebSocket
 
-Use WebSocket for real-time workflow execution updates.
+Use WebSocket for real-time workflow execution updates with subscription-based model.
 
-**Endpoint:** `WS /ws?client_id={client_id}`
+**Endpoint:** `WS /ws`
+
+**Connection flow:**
+1. Connect to the WebSocket endpoint (no client_id required)
+2. Send `subscribe` message for specific execution IDs you want to monitor
+3. Receive `execution_update` messages for subscribed executions
+4. Send `unsubscribe` message to stop receiving updates
 
 **Connection example (JavaScript):**
 ```javascript
-const ws = new WebSocket('ws://localhost:8000/ws?client_id=my-client-123');
+// Connect to global WebSocket
+const ws = new WebSocket('ws://localhost:8000/ws');
 
 ws.onopen = () => {
   console.log('Connected');
+  
+  // Subscribe to execution 5
+  ws.send(JSON.stringify({
+    type: 'subscribe',
+    execution_id: 5
+  }));
 };
 
 ws.onmessage = (event) => {
@@ -607,11 +620,27 @@ ws.onmessage = (event) => {
   // data.execution_id = 5
   // data.data = { ... }
 };
+
+// Unsubscribe when done
+ws.send(JSON.stringify({
+  type: 'unsubscribe',
+  execution_id: 5
+}));
 ```
 
+**Client messages:**
+- `subscribe`: Subscribe to updates for a specific execution ID
+- `unsubscribe`: Unsubscribe from execution updates
+
 **Server message types:**
-- `execution_update`: workflow execution update
-- `pong`: ping response
+- `execution_update`: Workflow execution update (node_started, node_completed, node_failed, completed, failed)
+- `pong`: Ping response
+
+**Subscription model:**
+- Single WebSocket connection can subscribe to multiple executions
+- Server tracks client subscriptions per execution
+- Updates are only sent to clients subscribed to that execution
+- When client disconnects, all subscriptions are automatically cleaned up
 
 ---
 

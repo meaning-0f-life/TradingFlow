@@ -13,7 +13,7 @@ A powerful, visual workflow orchestration platform for financial market analysis
 - **LLM Integration**: Support for OpenAI, Anthropic, OpenRouter, DeepSeek and more
 - **Multi-Agent System**: Build collaborative AI agent teams for market analysis
 - **RAG Support**: Vector database integration for knowledge management
-- **Real-time Execution**: WebSocket-based progress tracking
+- **Real-time Execution**: Global WebSocket connection with multi-execution subscription support
 - **Secure API Key Management**: Encrypted storage of all external service credentials
 - **Extensible Architecture**: Easy to add custom nodes and integrations
 
@@ -157,7 +157,8 @@ Workflows are directed graphs of nodes. Data flows from one node to another thro
 - **Concurrent**: Independent nodes run in parallel (configurable concurrency limit)
 - **Dependency-aware**: Nodes wait for their dependencies to complete
 - **Fault-tolerant**: Configurable fail-fast or continue-on-error modes
-- **Real-time updates**: WebSocket notifications for all execution events
+- **Real-time updates**: Global WebSocket connection with automatic subscription on workflow start
+- **Page-independent**: Workflows continue running regardless of which page the user is viewing
 
 ## API Endpoints
 
@@ -179,7 +180,9 @@ Workflows are directed graphs of nodes. Data flows from one node to another thro
 - `GET /api/execution/executions/{id}` - Get execution details
 
 ### WebSocket
-- `WS /ws?client_id={id}` - Real-time execution updates
+- `WS /ws` - Global WebSocket connection for real-time execution updates
+  - Clients send `subscribe`/`unsubscribe` messages for specific execution IDs
+  - Server broadcasts execution updates only to subscribed clients
 
 ## Node Types
 
