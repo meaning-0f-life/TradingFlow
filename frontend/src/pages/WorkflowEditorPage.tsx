@@ -17,6 +17,7 @@ import 'reactflow/dist/style.css';
 import { useWorkflowStore } from '@/store/workflowStore';
 import { useNodeStore } from '@/store/nodeStore';
 import { useAuthStore } from '@/store/authStore';
+import { useWebSocketStore } from '@/store/websocketStore';
 import { workflowsAPI } from '@/services/api';
 import type { WorkflowConfig, WorkflowNode, WorkflowEdge as WorkflowEdgeType } from '@/types';
 
@@ -40,6 +41,7 @@ export default function WorkflowEditorPage() {
   const { user } = useAuthStore();
   const { createWorkflow, updateWorkflow, currentWorkflow, setCurrentWorkflow } = useWorkflowStore();
   const { nodeTypes: availableNodeTypes, fetchNodeTypes, isLoading: nodesLoading } = useNodeStore();
+  const { subscribe } = useWebSocketStore();
 
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
@@ -321,6 +323,8 @@ export default function WorkflowEditorPage() {
       const execution = await executionAPI.run(parseInt(id));
       if (execution) {
         toast.success('Workflow execution started');
+        // Subscribe to WebSocket updates for this execution immediately
+        subscribe(execution.id);
         // No automatic redirect - execution continues in background
         // User can manually navigate to Execution History to see updates
       }
@@ -329,7 +333,7 @@ export default function WorkflowEditorPage() {
     } finally {
       setIsRunning(false);
     }
-  }, [id, isRunning]);
+  }, [id, isRunning, subscribe]);
 
   // Auto-save on changes (debounced in real app)
   useEffect(() => {
